@@ -1,42 +1,51 @@
 import numpy as np
 import cv2
-import requests
 import firebase_admin
 import os
 import base64
 from datetime import datetime
 from firebase_admin import storage
 from firebase_admin import db
+import  urllib.request as urllib2
+import wget
+import json
 
 def hello_pubsub(event, context):
     try:
         firebase_admin.get_app()
     except ValueError:
-        app = firebase_admin.initialize_app(options={'databaseURL' : '<your-firebase-rtdb-url>'})
+        app = firebase_admin.initialize_app(options={'databaseURL' : '<your-firebase-database-url>'})
     ref = db.reference('dash')
     bucket = storage.bucket("<your-firebase-storage-bucket>")
-    response = requests.get("https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0211.jpg")
-    if response.status_code == 200:
-        with open('/tmp/211.jpg', 'wb+') as f:
-            f.write(response.content)
-            f.close
-            response.close
-    else:
-        response.close
-        exit()
+    dataBaseURL = "https://services.swpc.noaa.gov/products/animations/suvi-primary-195.json"
+    urllib2.urlcleanup()
+    headers = {"Cache-Control": "max-age=0", "Pragma": "no-cache", }
+    req = urllib2.Request(dataBaseURL, None, headers) 
+    dateReqs =urllib2.urlopen(req)
+    html_bytes = dateReqs.read()
+    html = html_bytes.decode("utf-8")
+    imageData = json.loads(html)
+    h = imageData[-1]
+    url = h['url']
+    purl = "https://services.swpc.noaa.gov"+url
+    print('url',purl)
+    try:
+        wget.download(url="https://services.swpc.noaa.gov"+url, out='/tmp/211.jpg'  )
+    except Exception as e:
+        print('save image Error', e)
 
     gray_img = cv2.imread('/tmp/211.jpg', cv2.IMREAD_GRAYSCALE)
 
     def gray_cropp( image):
-        maskg = np.zeros((1024, 1024), dtype=np.uint8)
-        cv2.circle(maskg, (512, 512), 400, (1,1,1), -1, 1, 0)
+        maskg = np.zeros((1280, 1280), dtype=np.uint8)
+        cv2.circle(maskg, (650, 650), 400, (1,1,1), -1, 1, 0)
         cropped = image*maskg
         return cropped
 
 
     def color_cropp8(image):
-        maskc = np.zeros((1024, 1024, 3), dtype=np.uint8)
-        cv2.circle(maskc, (512, 512), 400, (1, 1, 1), -1, 1, 0)
+        maskc = np.zeros((1280, 1280, 3), dtype=np.uint8)
+        cv2.circle(maskc, (650, 650), 400, (1, 1, 1), -1, 1, 0)
         cropped = image*maskc
         return cropped
 
