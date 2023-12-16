@@ -1,0 +1,2 @@
+# Solar Coronal Hole Detection and Visualization
+A GCP Cloud Function for detecting solar coronal holes and major filaments. It detects and false colors the coronal holes and filaments of the most recent image of the sun from the SDO satellite 211 spectrum. It then uploads the image to a Firebase Storage bucket.
